@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+<!-- 自动扫描以下包加入IOC -->
+<context:component-scan base-package="main.java">
+	<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+</context:component-scan>
+
+<!-- service层类纳入IOC -->
+<bean id="employeeservice" class="service.EmployeeService"></bean>
+<bean id="departmentService" class="service.DepartmentService"></bean>
+
+<!-- 通过commons包获取连接池 -->
+<bean  id="config" class="org.springframework.beans.factory.config.PreferencesPlaceholderConfigurer">
+		<property name="locations">
+			<array>
+				<value>classpath:db.properties</value>
+			</array>		
+		</property>		
+</bean>
+<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${driver}"/>
+		<property name="url" value="${url}"/>
+		<property name="username" value="${username}"/>
+		<property name="password" value="${password}"/>
+</bean>
+
+<!-- mybatis获取sqlSessionFactory  -->
+<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean"> 
+		<property name="configLocation" value="classpath:conf.xml"></property><!-- 指定mybatis配置文件位置 -->
+		<property name="dataSource" ref="dataSource"></property>			
+		<property name="mapperLocations" value="classpath:mapper/*.xml"></property>	<!--加载mapper.xml路径  -->	
+</bean>
+	   
+<!-- 生成mapper对象(批量产生多个mapper)  批量产生Mapper类在SpringIOC中的id值 默认就是首字母小写接口名 (首字母小写的接口名=id值) -->
+ <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	 <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property> 	 	
+	 <property name="basePackage" value="dao"></property>	<!--  指定批量产生哪个包中的mapper对象 -->
+</bean>
+
+
+<!-- 配置一个可以执行批量的sqlsession -->
+<bean id="sqlsession" class="org.mybatis.spring.SqlSessionTemplate">
+	<constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"></constructor-arg>
+	<constructor-arg name="executorType" value="BATCH"></constructor-arg>
+</bean>
+
+<!-- 配置事务管理器transactionManager -->
+<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	<property name="dataSource" ref="dataSource"></property>
+</bean>
+
+
+<!-- 事务增强，事务如何切入 -->	
+<tx:advice id="txAdvice" transaction-manager="transactionManager">
+	<tx:attributes>
+		<tx:method name="*"/>
+		<tx:method name="get*"/>
+	</tx:attributes>
+</tx:advice>
+
+<!-- 通过配置实现通知类的配置 -->
+<aop:config>
+	<aop:pointcut expression="execution(public void service..*(..))" id="txPoint"/>
+	<aop:advisor advice-ref="txAdvice" pointcut-ref="txPoint"/>
+</aop:config>
+
+</beans>
