@@ -1,0 +1,2 @@
+# Employee-management-system
+简单的ssm练手项目，前后端分离,前端页面有两个，views包里面的list页面采用传统mvc形式，index页面采用Jason字符串传参给前端，实习前后端分离
