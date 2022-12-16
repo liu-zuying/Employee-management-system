@@ -7,7 +7,7 @@
   
    <!-- 统一版本号  -->
   <properties>
-  	<spring.version>4.3.17.RELEASE</spring.version>
+  	<spring.version>5.2.20.RELEASE</spring.version>
 
    <!-- 项目编译编码-->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
